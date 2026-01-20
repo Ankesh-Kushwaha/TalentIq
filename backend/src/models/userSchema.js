@@ -14,14 +14,14 @@ const userSchema = new mongoose.Schema({
     required: true
   },
 
-  passwordHash: {
+  password: {
     type: String,
     required: true
   },
 
   role: {
     type: String,
-    enum: ["USER", "ADMIN"],
+    enum: ["USER", "ADMIN","SUPER_ADMIN"],
     default: "USER"
   },
 
@@ -56,4 +56,5 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;

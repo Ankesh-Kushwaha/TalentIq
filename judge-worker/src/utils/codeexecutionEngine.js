@@ -9,9 +9,7 @@ import TestCase from "../models/TestCase.js";
 import Language from "../models/Language.js";
 import ExecutionJob from "../models/ExecutionJob.js";
 
-/* ------------------------------------------------------------------ */
 /* ---------------------- Docker Image Cache -------------------------- */
-/* ------------------------------------------------------------------ */
 
 const pulledImages = new Set();
 
@@ -147,9 +145,7 @@ async function executeSubmission(submission) {
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* ---------------------- Single Test Runner -------------------------- */
-/* ------------------------------------------------------------------ */
 
 function normalizeOutput(output) {
   return output.replace(/\s+/g, " ").trim();
