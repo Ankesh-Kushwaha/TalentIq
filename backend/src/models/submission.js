@@ -4,11 +4,9 @@ import mongoose from 'mongoose';
 
 const submissionSchema = new mongoose.Schema({
   userId: {
-    type: String,
-    required:true,
-    // type: mongoose.Schema.Types.ObjectId,
-    // ref: "User",
-    // index: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    index: true
   },
 
   problemId: {

@@ -2,6 +2,8 @@ import redis from "../config/redisConfig.js";
 import Submission from "../models/Submission.js";
 import Language from "../models/Language.js";
 import TestCase from "../models/TestCaseSchema.js";
+import logger from "../config/logger.js";
+import { TbReceiptYen } from "react-icons/tb";
 
 
 export const codeSubmission = async (req, res) => {
@@ -14,8 +16,8 @@ export const codeSubmission = async (req, res) => {
         message: "All fields are required"
       });
     }
-
-    // ✅ Validate language
+    
+    //Validate language
     const lang = await Language.findOne({ key: language });
     if (!lang) {
       return res.status(400).json({
@@ -24,7 +26,7 @@ export const codeSubmission = async (req, res) => {
       });
     }
 
-    // ✅ Ensure test cases exist
+    //Ensure test cases exist
     const testCaseCount = await TestCase.countDocuments({ problemId });
     if (testCaseCount === 0) {
       return res.status(404).json({
@@ -33,7 +35,7 @@ export const codeSubmission = async (req, res) => {
       });
     }
 
-    // ✅ Create submission
+    //Create submission
     const submission = await Submission.create({
       userId,
       problemId,
@@ -43,14 +45,14 @@ export const codeSubmission = async (req, res) => {
       testResults: []
     });
 
-    // ✅ Minimal job payload (IMPORTANT)
+    // Minimal job payload (IMPORTANT)
     const jobData = {
       submissionId: submission._id,
       problemId,
       language
     };
 
-    // ✅ Push to execution queue
+    //Push to execution queue
     await redis.lPush("execution_queue", JSON.stringify(jobData));
 
     return res.status(200).json({
@@ -61,12 +63,176 @@ export const codeSubmission = async (req, res) => {
 
   } catch (err) {
     console.error("Submission error:", err);
+    logger.error(`submission error:${err.message}`);
     return res.status(500).json({
       success: false,
       message: "Internal server error"
     });
   }
 };
+
+
+export const getASingleSubmission = async (req, res) => {
+  try {
+    const submissionId = req.body;
+    if (!problemId) return res.status(404).json("submission does not exist");
+    const submission = await Submission.findById(submissionId);
+    if (!submission) return res.status(400).json("no submission");
+    return res.status(200).json({
+      success: true,
+      message: "submission fetched successfully",
+      submission:submission,
+    })
+  }
+  catch (err) {
+    console.log("error while getting a single submission", err.message);
+    logger.error(`error while getting submission :${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message:'internal server error',
+    })
+  }
+}
+
+export const getAllUserSubmission = async (req, res) => {
+  try {
+    const userId = req.user?.userId || req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const submissionCount = await Submission.countDocuments({
+      userId: userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalSubmissions: submissionCount,
+    });
+
+  } catch (err) {
+    console.error("error while getting all user submission:", err.message);
+    logger.error("error while getting all user submission");
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+export const countParticularQuestionSubmissionStats = async (req, res) => {
+  try {
+    const { problemId } = req.body;
+
+    if (!problemId) {
+      return res.status(400).json({
+        success: false,
+        message: "problemId is required",
+      });
+    }
+
+    const stats = await Submission.aggregate([
+      {
+        $match: { problemId }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSubmissions: { $sum: 1 },
+          submissionAccepted: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "AC"] }, 1, 0]
+            }
+          },
+          submissionFailed: {
+            $sum: {
+              $cond: [
+                {
+                  $in: [
+                    "$status",
+                    ["WA", "TLE", "MLE", "RE", "CE", "SYSTEM_ERROR"]
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          totalSubmissions: 1,
+          submissionAccepted: 1,
+          submissionFailed: 1,
+          acceptanceRate: {
+            $cond: [
+              { $gt: ["$totalSubmissions", 0] },
+              {
+                $multiply: [
+                  { $divide: ["$submissionAccepted", "$totalSubmissions"] },
+                  100
+                ]
+              },
+              0
+            ]
+          }
+        }
+      }
+    ]);
+
+    const result = stats[0] || {
+      totalSubmissions: 0,
+      submissionAccepted: 0,
+      submissionFailed: 0,
+      acceptanceRate: 0
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "problem stats fetched successfully",
+      ...result
+    });
+
+  } catch (err) {
+    console.error("error while getting question stats", err.message);
+    logger.error(`error while getting question stats: ${err.message}`);
+
+    return res.status(500).json({
+      success: false,
+      message: "internal server error",
+    });
+  }
+};
+
+export const getAllSubmissionOfAProblem = async (req, res) => {
+  try {
+    const { problemId } = req.body;
+    if (!problemId) return res.status(400).json("problemId required");
+    const submissions= await Submission.find({ problemId: problemId }).sort({ createdAt: -1 });
+    return res.staus(200).json({
+      success: true,
+      message: "submission found",
+      submissions: submissions,
+    });
+  }
+  catch (err) {
+    console.log("error while getting problem submission");
+    logger.error(`error while getting problem submission :${err.message}`);
+    res.status(200).json({
+      success: true,
+      message:"internal server error",
+    })
+  }
+}
+
 
 
 

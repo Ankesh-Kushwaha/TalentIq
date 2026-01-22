@@ -4,7 +4,6 @@ import Problems from '../models/problems.js'
 export const createTestCases = async (req, res) => {
   try {
     const testCases = req.body;
-
     // 1. Validate request body
     if (!Array.isArray(testCases) || testCases.length === 0) {
       return res.status(400).json({

@@ -6,6 +6,8 @@ import redis from './config/redisConfig.js';
 import { environment } from './utils/env.js';
 import problemRoute from './routes/problemsRoutes.js'
 import testCaseRoute from './routes/TestCaseRoutes.js'
+import userRoutes from './routes/userRoutes.js'
+import handleSubmissionRoute from './routes/handleSubmissionRoute.js'
 
 const app = express();
 const PORT = 3000;
@@ -27,10 +29,12 @@ app.get('/health', (req, res) => {
     .catch((err) => console.error("Mongo error:", err));
 })();
 
-// ✅ correct route mounting
+
+app.use('/api/user', userRoutes);
 app.use('/api/submission', submissionRoute);
 app.use('/api/problems', problemRoute);
 app.use('/api/testcase', testCaseRoute);
+app.use('/api/submission', handleSubmissionRoute);
 
 app.listen(PORT, () => {
   console.log(`server is listening on port:${PORT}`);

@@ -1,0 +1,8 @@
+2026-01-21 03:41:57 [ERROR]: error while user sign in
+2026-01-21 03:42:41 [ERROR]: error while user sign in
+2026-01-21 03:45:23 [ERROR]: error while user sign in
+2026-01-21 03:47:13 [ERROR]: error while user sign in
+2026-01-21 03:54:45 [ERROR]: error while getting user Profile.
+2026-01-21 04:07:57 [ERROR]: ReferenceError: sendEmail is not defined
+    at userSignup (file:///C:/Users/ankes/Desktop/Talent-Iq/backend/src/controllers/userController.js:39:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

@@ -1,5 +1,6 @@
 // models/User.js
 import mongoose from "mongoose";
+import { string } from "zod";
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -13,16 +14,27 @@ const userSchema = new mongoose.Schema({
     unique: true,
     required: true
   },
-
   password: {
     type: String,
-    required: true
+    required: true,
+    select:false,
+  },
+
+  description: {
+    type: String,
+    default:""
+  },
+
+  ProfilePic: {
+    type: String,
+    default:"",
   },
 
   role: {
     type: String,
-    enum: ["USER", "ADMIN","SUPER_ADMIN"],
-    default: "USER"
+    enum: ["user", "admin","super_admin"],
+    default: "user",
+    immutable:true,
   },
 
   rating: {
@@ -49,7 +61,17 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-
+  
+  isActive: {
+    type: Boolean,
+    default:true,
+  },
+  resetPasswordToken: {
+    type:String
+  },
+  resetPasswordExpires: {
+    type:Date
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -13,6 +13,10 @@ import ExecutionJob from "../models/ExecutionJob.js";
 
 const pulledImages = new Set();
 
+function showCurrentState(submissionId, submissionStatus){
+  console.log(`job with submission_id:${submissionId} and its stauts: ${submissionStatus}`);
+}
+
 async function ensureDockerImage(image) {
   if (pulledImages.has(image)) return;
 
@@ -41,9 +45,7 @@ async function ensureDockerImage(image) {
   });
 }
 
-/* ------------------------------------------------------------------ */
 /* ---------------------- Queue Consumer ------------------------------ */
-/* ------------------------------------------------------------------ */
 
 export async function startQueueConsumer() {
   console.log("🚀 Judge worker started...");
@@ -58,7 +60,7 @@ export async function startQueueConsumer() {
 
       submission.status = "RUNNING";
       await submission.save();
-
+      showCurrentState(submission._id, submission.status);
       await ExecutionJob.create({
         submissionId: submission._id,
         status: "RUNNING",
@@ -81,6 +83,7 @@ async function executeSubmission(submission) {
   const language = await Language.findOne({ key: submission.language });
   if (!language) {
     submission.status = "SYSTEM_ERROR";
+    showCurrentState(submission._id, submission.status);
     await submission.save();
     return;
   }
@@ -95,7 +98,7 @@ async function executeSubmission(submission) {
 
   for (const tc of testCases) {
     const result = await runSingleTest(
-      submission.sourceCode,   // ✅ FIX: always read from DB
+      submission.sourceCode, 
       tc.input,
       tc.output,
       language
@@ -113,6 +116,7 @@ async function executeSubmission(submission) {
 
     if (result.status !== "AC") {
       finalVerdict = result.status;
+      showCurrentState(submission._id, result.status);
       break;
     }
   }
@@ -121,13 +125,14 @@ async function executeSubmission(submission) {
   submission.totalTime = totalTime;
   submission.testResults = results;
   await submission.save();
+  showCurrentState(submission._id, submission.status);
 
   await ExecutionJob.updateOne(
     { submissionId: submission._id },
     { status: "COMPLETED", finishedAt: new Date() }
   );
 
-  // 🔥 Push final result to result queue
+  
   await redis.rPush(
     "result_queue",
     JSON.stringify({

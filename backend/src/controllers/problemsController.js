@@ -1,15 +1,35 @@
 import Problems from '../models/problems.js'
+import User from '../models/userSchema.js'
 
 export const createProblem = async (req, res) => {
   try {
     //const userId = req.userId; to be implemting
+    const userId = req.user.userId;
     const { slug, title, description, difficulty, tags, constraints, inputFormat, outputFormat, timeLimit, memoryLimit } = req.body;
 
     //check user access here
-    
+    const user = await User.findOne({ _id: userId });
+    console.log(user);
+
+    if (user.role !=='super_admin' && user.role!== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: "you are not authorised to create problem",
+      });
+    }
+
     //check for the required field 
     if (!slug || !title || !description || !difficulty) {
       return res.status(400).json("slug , title ,description or difficulty is required");
+    }
+
+    //check the duplicay of the problem 
+    const problem = await Problems.findOne({ slug: slug });
+    if (problem) {
+      return res.status(400).json({
+        success: false,
+        message:"similar problem already exist.try different",
+       })
     }
     
     //create the problem;
