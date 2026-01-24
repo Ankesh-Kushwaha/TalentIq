@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { environment } from "../utils/env.js";
 import { ROLE_LEVEL } from "../utils/promotionRule.js";
 import crypto from 'crypto';
+import mongoose from "mongoose";
 //import {sendEmail} from '../utils/SendEmail.js'
 
 // user sign up api
@@ -131,76 +132,31 @@ export const userSignIn = async (req, res) => {
 
 export const promoteUser = async (req, res) => {
   try {
-    logger.info("promoteUser api hit.")
     const { userId, targetRole } = req.body;
+    const userIdObjectType = new mongoose.Types.ObjectId(userId);
 
-    if (!userId || !targetRole) {
-      return res.status(400).json("missing fields");
-    }
-
-    // Only these roles are assignable
-    const allowedRoles = ["admin", "super_admin"];
-    if (!allowedRoles.includes(targetRole)) {
-      return res.status(400).json("invalid target role");
-    }
-
-    // Fetch target user
-    const targetUser = await User.findById(userId);
-    if (!targetUser) {
-      return res.status(404).json("user not found");
-    }
-
-    // Who is making the request
-    const actorRole = req.user.role;
-
-    /* ---------------- ROLE RULE ENFORCEMENT ---------------- */
-
-    // Only super_admin can promote
-    if (actorRole !== "super_admin") {
+    const actor = await User.findById(req.user.userId);
+    if (!actor || actor.role !== "super_admin") {
       return res.status(403).json("only super_admin can promote users");
     }
 
-    //  Cannot promote someone to same or lower role
+    const targetUser = await User.findById(userIdObjectType);
+    if (!targetUser) return res.status(404).json("user not found");
+
     if (ROLE_LEVEL[targetRole] <= ROLE_LEVEL[targetUser.role]) {
       return res.status(400).json("invalid promotion");
     }
 
-    //  Enforce step-by-step promotion (NO SKIP)
-    if (
-      targetUser.role === "user" &&
-      targetRole !== "admin"
-    ) {
-      return res.status(400).json("user can only be promoted to admin");
-    }
-
-    if (
-      targetUser.role === "admin" &&
-      targetRole !== "super_admin"
-    ) {
-      return res.status(400).json("admin can only be promoted to super_admin");
-    }
-
-    // Prevent self-promotion edge case
-    if (
-      targetUser._id.toString() === req.user.userId &&
-      targetRole === "super_admin"
-    ) {
-      return res.status(403).json("cannot self-promote");
-    }
-
-    /* ---------------- APPLY PROMOTION ---------------- */
-
     targetUser.role = targetRole;
     await targetUser.save();
-
+    console.log(targetUser.role);
+    
     return res.status(200).json({
       success: true,
-      message: `user promoted to ${targetRole}`
+      message: `user promoted to ${targetRole}`,
     });
-
   } catch (err) {
     console.error(err);
-    logger.error("error while promoting user");
     return res.status(500).json("internal server error");
   }
 };

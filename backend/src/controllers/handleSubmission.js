@@ -3,7 +3,7 @@ import Submission from "../models/Submission.js";
 import Language from "../models/Language.js";
 import TestCase from "../models/TestCaseSchema.js";
 import logger from "../config/logger.js";
-import { TbReceiptYen } from "react-icons/tb";
+import mongoose from "mongoose";
 
 
 export const codeSubmission = async (req, res) => {
@@ -74,9 +74,10 @@ export const codeSubmission = async (req, res) => {
 
 export const getASingleSubmission = async (req, res) => {
   try {
-    const submissionId = req.body;
-    if (!problemId) return res.status(404).json("submission does not exist");
-    const submission = await Submission.findById(submissionId);
+    const {submissionId} = req.body;
+    const submissionIdObjectType =  new mongoose.Types.ObjectId(submissionId);
+    if (!submissionIdObjectType) return res.status(404).json("submissionId is required");
+    const submission = await Submission.findById(submissionIdObjectType);
     if (!submission) return res.status(400).json("no submission");
     return res.status(200).json({
       success: true,
@@ -129,8 +130,9 @@ export const getAllUserSubmission = async (req, res) => {
 export const countParticularQuestionSubmissionStats = async (req, res) => {
   try {
     const { problemId } = req.body;
+    const problemObjectId = new mongoose.Types.ObjectId(problemId)
 
-    if (!problemId) {
+    if (!problemObjectId) {
       return res.status(400).json({
         success: false,
         message: "problemId is required",
@@ -139,7 +141,7 @@ export const countParticularQuestionSubmissionStats = async (req, res) => {
 
     const stats = await Submission.aggregate([
       {
-        $match: { problemId }
+        $match: { problemId:problemObjectId }
       },
       {
         $group: {
@@ -217,7 +219,7 @@ export const getAllSubmissionOfAProblem = async (req, res) => {
     const { problemId } = req.body;
     if (!problemId) return res.status(400).json("problemId required");
     const submissions= await Submission.find({ problemId: problemId }).sort({ createdAt: -1 });
-    return res.staus(200).json({
+    return res.status(200).json({
       success: true,
       message: "submission found",
       submissions: submissions,

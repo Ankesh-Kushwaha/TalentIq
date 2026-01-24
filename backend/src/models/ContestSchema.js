@@ -16,4 +16,5 @@ const contestSchema = new mongoose.Schema({
   isRated: Boolean
 });
 
-export default mongoose.model("Contest", contestSchema);
+const Contest = mongoose.model("Contest", contestSchema);
+export default Contest;

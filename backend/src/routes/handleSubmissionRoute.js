@@ -9,7 +9,7 @@ router.post('/', authenticate, codeSubmissionRateLimiter, codeSubmission);
 router.use(authenticate, generalLimiter);
 router.get('/get-single-submission', getASingleSubmission);
 router.get('/get-all-submission-of-a-problem', getAllSubmissionOfAProblem);
-router.get('/get-all-user-submission', getAllSubmissionOfAProblem);
+router.get('/get-all-user-submission',getAllUserSubmission);
 router.get('/count-question-stats', countParticularQuestionSubmissionStats);
 
 export default router;

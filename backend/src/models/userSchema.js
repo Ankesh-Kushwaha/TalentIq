@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "admin","super_admin"],
     default: "user",
-    immutable:true,
   },
 
   rating: {

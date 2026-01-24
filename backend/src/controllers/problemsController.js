@@ -1,9 +1,12 @@
 import Problems from '../models/problems.js'
 import User from '../models/userSchema.js'
+import logger from '../config/logger.js';
+import mongoose from 'mongoose';
 
 export const createProblem = async (req, res) => {
   try {
     //const userId = req.userId; to be implemting
+    logger.info("create problem end point hit....")
     const userId = req.user.userId;
     const { slug, title, description, difficulty, tags, constraints, inputFormat, outputFormat, timeLimit, memoryLimit } = req.body;
 
@@ -61,6 +64,7 @@ export const createProblem = async (req, res) => {
   }
   catch (err) {
     console.log("error while creating Problem:", err.message);
+    logger.error(`error while creating a problem :${err.message}`);
     res.status(500).json({
       success: false,
       message: "internal server error",
@@ -70,6 +74,7 @@ export const createProblem = async (req, res) => {
 
 export const getASingleProblem = async (req, res) => {
   try {
+    logger.info("get a single problem endpoint hit......");
     const { problemId } = req.params;
     if (!problemId) return res.status(400).json("problemId is required");
     const problem = await Problems.findOne({_id:problemId});
@@ -81,6 +86,7 @@ export const getASingleProblem = async (req, res) => {
   }
   catch (err) {
     console.error("error while getting a problem", err.message);
+    logger.error(`error while getting a single problem :${err.message}`);
     return res.status(500).json({
       success: false,
       message:"internal server error.try after sometime."
@@ -90,6 +96,7 @@ export const getASingleProblem = async (req, res) => {
 
 export const getAllProblem = async (req, res) => {
   try {
+    logger.info("get all problem endpoint hit......");
     const problems = await Problems.find();
     return res.status(200).json({
       success: false,
@@ -99,6 +106,7 @@ export const getAllProblem = async (req, res) => {
   }
   catch (err) {
     console.error("error while getting all problem", err.message);
+    logger.error(`error while getting all problem ${err.message}`);
     return res.status(500).json({
       success: false,
       message:"internal server error.try after sometime."
@@ -107,9 +115,86 @@ export const getAllProblem = async (req, res) => {
 }
 
 export const deleteAProblem = async (req, res) => {
-  
+  try {
+    const { problemId } = req.params;
+    if (!problemId) return res.status(400).json("problemId required");
+
+    const problemIdObject = new mongoose.Types.ObjectId(problemId);
+    const deletedProblem = await Problems.findByIdAndDelete(problemIdObject);
+    return res.status(200).json({
+      success: true,
+      message: "problem deleted successfully !",
+      deletedProblem,
+    })
+  }
+  catch (err) {
+    console.error("error while deleting the problem");
+    logger.error(`error while deleting the problem ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message:"internal server error",
+    })
+  }
 }
 
 export const updateAProblem = async (req, res) => {
-  
-}
+  try {
+    logger.info("update a problem endpoint hit ......");
+    const role = req.user.role;
+    if (role !== "admin" || role !== "super_admin") return res.json("unauthorised access");
+
+    const { problemId } = req.params;
+    if (!problemId) {
+      return res.status(400).json({ message: "problemId required" });
+    }
+
+    // only pick allowed fields
+    const updateFields = (({
+      description,
+      title,
+      difficulty,
+      tags,
+      constraints,
+      inputFormat,
+      outputFormat,
+      timeLimit,
+      memoryLimit,
+      supportedLanguages
+    }) => ({
+      description,
+      title,
+      difficulty,
+      tags,
+      constraints,
+      inputFormat,
+      outputFormat,
+      timeLimit,
+      memoryLimit,
+      supportedLanguages
+    }))(req.body);
+
+    // remove undefined fields
+    Object.keys(updateFields).forEach(
+      key => updateFields[key] === undefined && delete updateFields[key]
+    );
+
+    const updatedProblem = await Problems.findByIdAndUpdate(
+      problemId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProblem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    return res.status(200).json({
+      message: "Problem updated successfully",
+      data: updatedProblem
+    });
+
+  } catch (err) {
+    logger.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

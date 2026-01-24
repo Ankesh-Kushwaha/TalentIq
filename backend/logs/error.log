@@ -6,3 +6,11 @@
 2026-01-21 04:07:57 [ERROR]: ReferenceError: sendEmail is not defined
     at userSignup (file:///C:/Users/ankes/Desktop/Talent-Iq/backend/src/controllers/userController.js:39:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-01-23 11:18:15 [ERROR]: error while getting submission :problemId is not defined
+2026-01-23 11:18:18 [ERROR]: error while getting submission :problemId is not defined
+2026-01-23 11:24:58 [ERROR]: error while getting problem submission :res.staus is not a function
+2026-01-23 11:34:24 [ERROR]: error while getting submission :Cast to ObjectId failed for value "{ submissionId: '697279630efa9845ff4c0bb8' }" (type Object) at path "_id" for model "Submission"
+2026-01-23 11:36:07 [ERROR]: error while getting submission :Class constructor ObjectId cannot be invoked without 'new'
+2026-01-23 11:36:22 [ERROR]: error while getting submission :Argument passed in does not match the accepted types
+2026-01-23 11:40:34 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-23 11:41:24 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.

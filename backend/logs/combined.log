@@ -15,3 +15,26 @@
 2026-01-21 04:31:36 [INFO]: get all user endpoints hit..
 2026-01-23 00:17:57 [INFO]: getUserProfile endpoint hit.
 2026-01-23 01:11:46 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:18:15 [ERROR]: error while getting submission :problemId is not defined
+2026-01-23 11:18:18 [ERROR]: error while getting submission :problemId is not defined
+2026-01-23 11:24:58 [ERROR]: error while getting problem submission :res.staus is not a function
+2026-01-23 11:34:24 [ERROR]: error while getting submission :Cast to ObjectId failed for value "{ submissionId: '697279630efa9845ff4c0bb8' }" (type Object) at path "_id" for model "Submission"
+2026-01-23 11:36:07 [ERROR]: error while getting submission :Class constructor ObjectId cannot be invoked without 'new'
+2026-01-23 11:36:22 [ERROR]: error while getting submission :Argument passed in does not match the accepted types
+2026-01-23 11:40:34 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-23 11:41:24 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-23 11:50:28 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:53:22 [INFO]: promoteUser api hit.
+2026-01-23 11:53:47 [INFO]: promoteUser api hit.
+2026-01-23 11:54:24 [INFO]: promoteUser api hit.
+2026-01-23 11:54:35 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:54:39 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:54:42 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:54:49 [INFO]: promoteUser api hit.
+2026-01-23 11:56:22 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:59:17 [INFO]: getUserProfile endpoint hit.
+2026-01-23 11:59:34 [INFO]: getUserProfile endpoint hit.
+2026-01-23 12:02:20 [INFO]: getUserProfile endpoint hit.
+2026-01-23 12:09:51 [INFO]: user demoted successfully
+2026-01-23 12:10:00 [INFO]: getUserProfile endpoint hit.
+2026-01-23 12:10:22 [INFO]: getUserProfile endpoint hit.
