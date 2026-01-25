@@ -1,23 +1,32 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import useSignUp from "../hooks/useSignUp";
 
 export default function Signup() {
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
   });
+
+  const { signupUser, loading, error } = useSignUp();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Signup payload:", form);
-    // TODO: call signup API
+
+    try {
+      await signupUser(form);
+      navigate("/"); // ✅ redirect after signup
+    } catch {
+      // error handled in hook
+    }
   };
 
   return (
@@ -35,13 +44,15 @@ export default function Signup() {
           Join TalentIQ and start solving
         </p>
 
+        {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            name="name"
+            name="username"
             type="text"
             placeholder="Full Name"
             required
-            value={form.name}
+            value={form.username}
             onChange={handleChange}
             className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-md px-4 py-2 text-sm focus:outline-none focus:border-yellow-400"
           />
@@ -70,9 +81,10 @@ export default function Signup() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full bg-yellow-400 text-black py-2 rounded-md font-medium"
+            disabled={loading}
+            className="w-full bg-yellow-400 text-black py-2 rounded-md font-medium disabled:opacity-60"
           >
-            Sign Up
+            {loading ? "Creating account..." : "Sign Up"}
           </motion.button>
         </form>
 

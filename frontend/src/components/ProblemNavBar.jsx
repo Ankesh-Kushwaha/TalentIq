@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Clock, Menu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Clock, Menu, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function ProblemNavbar({ layout, setLayout }) {
   const navigate = useNavigate();
+  const { user, logout } = useAuthContext();
 
-  // mock user (replace with auth context)
-  const user = { name: "Ankesh" };
+  const isAuthenticated = Boolean(user);
 
-  // ⏱ Timer state
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!running) return;
@@ -27,6 +28,12 @@ export default function ProblemNavbar({ layout, setLayout }) {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    navigate("/login");
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-[#111] border-b border-[#1f2937]">
       {/* Top Bar */}
@@ -34,7 +41,7 @@ export default function ProblemNavbar({ layout, setLayout }) {
         {/* Left */}
         <div
           onClick={() => navigate("/problems")}
-          className="cursor-pointer text-sm font-semibold"
+          className="cursor-pointer text-sm font-semibold select-none"
         >
           <span className="text-white">Talent</span>
           <span className="text-yellow-400">IQ</span>
@@ -82,17 +89,61 @@ export default function ProblemNavbar({ layout, setLayout }) {
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-3">
-          {/* Profile */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <div className="h-7 w-7 rounded-full bg-yellow-400 text-black flex items-center justify-center text-sm font-semibold">
-              {user.name[0]}
+        <div className="flex items-center gap-3 relative">
+          {/* AUTH SECTION */}
+          {isAuthenticated ? (
+            <div className="relative">
+              {/* Avatar */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                onClick={() => setProfileOpen((p) => !p)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <div className="h-7 w-7 rounded-full bg-yellow-400 text-black flex items-center justify-center text-sm font-semibold">
+                  {user.name?.[0]?.toUpperCase() || "U"}
+                </div>
+                <span className="hidden sm:block text-sm">{user.name}</span>
+              </motion.div>
+
+              {/* Dropdown */}
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute right-0 mt-2 w-44 bg-[#111] border border-[#1f2937] rounded-md shadow-lg overflow-hidden"
+                  >
+                    <button
+                      onClick={() => {
+                        navigate(`/profile/${user.id}`);
+                        setProfileOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
+                    >
+                      <User size={16} />
+                      Profile
+                    </button>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-sm flex items-center gap-2 text-red-400 hover:bg-[#1a1a1a]"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <span className="hidden sm:block text-sm">{user.name}</span>
-          </motion.div>
+          ) : (
+            <button
+              onClick={() => navigate("/login")}
+              className="text-sm text-gray-300 hover:text-white"
+            >
+              Login
+            </button>
+          )}
 
           {/* Mobile Menu */}
           <button className="md:hidden">

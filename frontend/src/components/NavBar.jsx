@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, LogOut, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 const navItems = [
   { label: "Problems", path: "/problems" },
@@ -14,15 +15,18 @@ const navItems = [
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuthContext();
 
-  // 🔐 auth state (replace with context later)
-  const isAuthenticated = false;
+  const isAuthenticated = Boolean(user);
 
   // 🔍 search focus
   const searchRef = useRef(null);
 
   // 📱 mobile menu
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // 👤 profile dropdown
+  const [profileOpen, setProfileOpen] = useState(false);
 
   /* ⌨️ "/" keyboard shortcut */
   useEffect(() => {
@@ -35,6 +39,12 @@ export default function Navbar() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    navigate("/login");
+  };
 
   return (
     <motion.header
@@ -84,7 +94,7 @@ export default function Navbar() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 relative">
             {/* Search */}
             <div className="hidden lg:flex items-center gap-2 bg-[#111] border border-[#2a2a2a] px-3 py-1.5 rounded-md">
               <Search size={16} className="text-gray-400" />
@@ -96,17 +106,51 @@ export default function Navbar() {
               />
             </div>
 
-            {/* Auth */}
+            {/* AUTH SECTION */}
             {isAuthenticated ? (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                onClick={() => navigate("/profile/123")}
-                className="cursor-pointer flex items-center gap-2"
-              >
-                <div className="h-8 w-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-semibold">
-                  A
-                </div>
-              </motion.div>
+              <div className="relative">
+                {/* Avatar */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => setProfileOpen((p) => !p)}
+                  className="cursor-pointer flex items-center gap-2"
+                >
+                  <div className="h-8 w-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-semibold">
+                    {user.name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                </motion.div>
+
+                {/* Dropdown */}
+                <AnimatePresence>
+                  {profileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute right-0 mt-3 w-44 bg-[#111] border border-[#2a2a2a] rounded-md shadow-lg overflow-hidden"
+                    >
+                      <button
+                        onClick={() => {
+                          navigate(`/profile/${user.id}`);
+                          setProfileOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
+                      >
+                        <User size={16} />
+                        Profile
+                      </button>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-red-400 hover:bg-[#1a1a1a]"
+                      >
+                        <LogOut size={16} />
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <>
                 <motion.button
@@ -137,48 +181,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
-      {/* 📱 Mobile Menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden bg-[#111] border-t border-[#2a2a2a]"
-          >
-            {navItems.map(({ label, path }) => (
-              <button
-                key={label}
-                onClick={() => {
-                  navigate(path);
-                  setMenuOpen(false);
-                }}
-                className="block w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-[#1a1a1a]"
-              >
-                {label}
-              </button>
-            ))}
-
-            {!isAuthenticated && (
-              <div className="px-6 py-4 flex gap-3">
-                <button
-                  onClick={() => navigate("/login")}
-                  className="flex-1 text-sm text-gray-300 border border-[#2a2a2a] py-2 rounded-md"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => navigate("/signup")}
-                  className="flex-1 text-sm bg-yellow-400 text-black py-2 rounded-md"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.header>
   );
 }

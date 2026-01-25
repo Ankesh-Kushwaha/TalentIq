@@ -1,23 +1,37 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import useAuth from "../hooks/useAuth";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
 
+  const { loginUser, loading, error } = useAuth();
+  const { user } = useAuthContext();
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login payload:", form);
-    // TODO: call login API
+
+    await loginUser(form); // 🔥 API call via hook
   };
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "super_admin") navigate("/super-admin");
+      else if (user.role === "admin") navigate("/admin");
+      else navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center">
@@ -53,13 +67,16 @@ export default function Login() {
             className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-md px-4 py-2 text-sm focus:outline-none focus:border-yellow-400"
           />
 
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full bg-yellow-400 text-black py-2 rounded-md font-medium"
+            disabled={loading}
+            className="w-full bg-yellow-400 text-black py-2 rounded-md font-medium disabled:opacity-60"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </motion.button>
         </form>
 

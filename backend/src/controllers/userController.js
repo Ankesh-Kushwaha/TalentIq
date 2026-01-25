@@ -56,6 +56,12 @@ export const userSignup = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "signup successful",
+      user: {
+        name: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        userId:newUser._id,
+      },
       token
     });
 
@@ -111,9 +117,17 @@ export const userSignIn = async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    const loginUser = {
+      name: user.username,
+      email: user.email,
+      role: user.role,
+      userId:user._id
+    }
+
     return res.status(200).json({
       success: true,
       message: "user login successful",
+      user:loginUser,
       token
     });
 

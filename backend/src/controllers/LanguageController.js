@@ -1,4 +1,4 @@
-import Language from "../models/Language";
+import Language from "../models/Language.js";
 import logger from '../config/logger.js'
 import mongoose from "mongoose";
 

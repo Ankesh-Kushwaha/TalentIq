@@ -30,6 +30,8 @@ import AllUsers from "./pages/super_admin/AllUsers";
 import AuditLogs from "./pages/super_admin/AuditLogs";
 import PlatformActivity from "./pages/super_admin/PlatformActivity";
 import PlatformSettings from "./pages/super_admin/PlatformSettings";
+import Unauthorised from "./pages/Unauthorised";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
 const App = () => {
   const location = useLocation();
@@ -47,7 +49,6 @@ const App = () => {
   return (
     <>
       {!hideNavbar && <Navbar />}
-
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/problems" element={<Problems />} />
@@ -60,29 +61,29 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
 
         {/*super_admin control*/}
-        <Route path="/super-admin" element={<SuperAdminLayout />}>
-          <Route index element={<SuperDashboard />} />
-
-          <Route path="users" element={<AllUsers />} />
-          <Route path="admins" element={<AdminsControl />} />
-
-          <Route path="platform/activity" element={<PlatformActivity />} />
-          <Route path="platform/logs" element={<AuditLogs />} />
-
-          <Route path="content/problems" element={<AllProblems />} />
-          <Route path="content/testcases" element={<AllTestCases />} />
-
-          <Route path="settings" element={<PlatformSettings />} />
+        <Route element={<ProtectedRoute roles={["super_admin"]} />}>
+          <Route path="/super-admin" element={<SuperAdminLayout />}>
+            <Route index element={<SuperDashboard />} />
+            <Route path="users" element={<AllUsers />} />
+            <Route path="admins" element={<AdminsControl />} />
+            <Route path="platform/activity" element={<PlatformActivity />} />
+            <Route path="platform/logs" element={<AuditLogs />} />
+            <Route path="content/problems" element={<AllProblems />} />
+            <Route path="content/testcases" element={<AllTestCases />} />
+            <Route path="settings" element={<PlatformSettings />} />
+          </Route>
         </Route>
 
-        {/* admin control*/}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="problems" element={<AdminProblems />} />
-          <Route path="problems/new" element={<CreateEditProblem />} />
-          <Route path="problems/:id/edit" element={<CreateEditProblem />} />
-          <Route path="problems/set/testcases" element={<SetTestCases />} />
-          <Route path="control/contests" element={<SetContests />} />
-          <Route path="control/user/access" element={<UserControl />} />
+        {/* admin control */}
+        <Route element={<ProtectedRoute roles={["admin", "super_admin"]} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="problems" element={<AdminProblems />} />
+            <Route path="problems/new" element={<CreateEditProblem />} />
+            <Route path="problems/:id/edit" element={<CreateEditProblem />} />
+            <Route path="problems/set/testcases" element={<SetTestCases />} />
+            <Route path="control/contests" element={<SetContests />} />
+            <Route path="control/user/access" element={<UserControl />} />
+          </Route>
         </Route>
 
         {/* contest control */}
@@ -94,6 +95,8 @@ const App = () => {
           <Route path="leaderboard" element={<ContestLeaderboard />} />
           <Route path="discuss" element={<ContestDiscussion />} />
         </Route>
+
+        <Route path="/unauthorised" element={<Unauthorised />} />
       </Routes>
     </>
   );
