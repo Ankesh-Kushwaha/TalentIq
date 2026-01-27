@@ -1,4 +1,3 @@
-// Map<userId, Set<WebSocket>>
 export const userConnections = new Map();
 
 export function addConnection(userId, ws) {

@@ -2,16 +2,26 @@ import { motion } from "framer-motion";
 import { Users, CheckCircle, BarChart2 } from "lucide-react";
 
 export default function ProblemFooter({ stats }) {
-  const acceptanceRate = (
-    (stats.acceptedSubmissions / stats.totalSubmissions) *
-    100
-  ).toFixed(1);
+  // Defensive guard (prevents render crash)
+  if (!stats) return null;
+
+  const {
+    totalSubmissions = 0,
+    acceptedSubmissions = 0,
+    usersSolvingNow = 0,
+  } = stats;
+
+  const acceptanceRate =
+    totalSubmissions > 0
+      ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(1)
+      : "0.0";
 
   return (
     <motion.footer
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="sticky bottom-0 bg-[#0b0f19] border-t border-[#1f2937] px-4 py-3"
+      transition={{ duration: 0.25 }}
+      className="bg-[#0b0f19] border-t border-[#1f2937] px-4 py-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-400">
         {/* Users Solving */}
@@ -19,7 +29,7 @@ export default function ProblemFooter({ stats }) {
           <Users size={14} />
           <span>
             <span className="text-gray-200 font-medium">
-              {stats.usersSolvingNow.toLocaleString()}
+              {usersSolvingNow.toLocaleString()}
             </span>{" "}
             solving now
           </span>
@@ -30,7 +40,7 @@ export default function ProblemFooter({ stats }) {
           <CheckCircle size={14} className="text-green-400" />
           <span>
             <span className="text-gray-200 font-medium">
-              {stats.acceptedSubmissions.toLocaleString()}
+              {acceptedSubmissions.toLocaleString()}
             </span>{" "}
             accepted
           </span>
@@ -41,7 +51,7 @@ export default function ProblemFooter({ stats }) {
           <BarChart2 size={14} />
           <span>
             <span className="text-gray-200 font-medium">
-              {stats.totalSubmissions.toLocaleString()}
+              {totalSubmissions.toLocaleString()}
             </span>{" "}
             submissions
           </span>

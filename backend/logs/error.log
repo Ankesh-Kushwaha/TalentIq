@@ -14,3 +14,41 @@
 2026-01-23 11:36:22 [ERROR]: error while getting submission :Argument passed in does not match the accepted types
 2026-01-23 11:40:34 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.
 2026-01-23 11:41:24 [ERROR]: error while getting problem submission :Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:03:23 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:03:23 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:04:55 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:04:56 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:17 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:17 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:24 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:25 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:30 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:30 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:35 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:35 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:42 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:42 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:48 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:05:48 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:10:48 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:10:48 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:13:40 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:13:40 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:23 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:23 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:24 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:24 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:25 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:14:25 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:30 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:30 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:33 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:33 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:47 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:16:47 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:20:21 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:20:21 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:20:39 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:20:39 [ERROR]: error while getting question stats: Cannot destructure property 'problemId' of 'req.body' as it is undefined.
+2026-01-28 01:27:27 [ERROR]: error while getting a single problem :Cast to ObjectId failed for value "696e933e23962c3153a8202" (type string) at path "_id" for model "Problem"
+2026-01-28 01:27:32 [ERROR]: error while getting a single problem :Cast to ObjectId failed for value "696e933e23962c3153a8202" (type string) at path "_id" for model "Problem"

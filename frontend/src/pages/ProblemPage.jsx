@@ -1,149 +1,235 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Editor from "@monaco-editor/react";
+import { useParams } from "react-router-dom";
 
 import ProblemNavbar from "../components/ProblemNavBar";
 import ProblemFooter from "../components/ProblemFooter";
 
-import { problem, problemStats } from "../mock/problemData";
 import { boilerplate } from "../utils/boilerPlate";
 import { runCodeAPI, submitCodeAPI } from "../apis/judge";
+import {
+  getASingleProblem,
+  getAsingleProblemStats,
+  getTestCases,
+} from "../apis/problems.api";
+import { useAuthContext } from "../hooks/useAuthContext";
+
+const wss_url = import.meta.env.VITE_WS_URL;
 
 export default function ProblemPage() {
-  /* =======================
-     STATE
-  ======================== */
+  const { problemId } = useParams();
+  const { user ,token} = useAuthContext();
+
+  const wsRef = useRef(null);
+
   const [layout, setLayout] = useState("split");
   const [language, setLanguage] = useState("cpp");
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [verdict, setVerdict] = useState(null);
+
+  const [problem, setProblem] = useState(null);
+  const [problemStats, setProblemStats] = useState(null);
+  const [testCases, setTestCases] = useState([]);
+
+  const [submissionResult, setSubmissionResult] = useState(null);
 
   /* =======================
-     LOAD + AUTOSAVE CODE
-  ======================== */
+     FETCH PROBLEM DATA
+  ======================= */
   useEffect(() => {
+    const fetchData = async () => {
+      const problemRes = await getASingleProblem(problemId);
+      if (problemRes?.success) {
+        setProblem({
+          ...problemRes.problem,
+          tags: problemRes.problem.tags || [],
+        });
+      }
+
+      const statsRes = await getAsingleProblemStats(problemId);
+      if (statsRes?.success) setProblemStats(statsRes);
+
+      const tcRes = await getTestCases(problemId);
+      setTestCases(tcRes?.testCases || []);
+    };
+
+    fetchData();
+  }, [problemId]);
+
+  /* =======================
+     LOAD / SAVE CODE
+  ======================= */
+  useEffect(() => {
+    if (!problem) return;
+
     const saved =
-      localStorage.getItem(`${problem.id}-${language}`) ||
+      localStorage.getItem(`${problem._id}-${language}`) ||
       boilerplate[language];
+
     setCode(saved);
-  }, [language]);
+  }, [language, problem]);
 
   useEffect(() => {
-    localStorage.setItem(`${problem.id}-${language}`, code);
-  }, [code, language]);
+    if (!problem) return;
+    localStorage.setItem(`${problem._id}-${language}`, code);
+  }, [code, language, problem]);
 
   /* =======================
-     RUN / SUBMIT
-  ======================== */
+     WEBSOCKET (VERDICT)
+  ======================= */
+  useEffect(() => {
+    if (!user || wsRef.current) return; // FIX: prevent reconnect
+
+    wsRef.current = new WebSocket(`${wss_url}/ws?userId=${user.userId}`);
+
+    wsRef.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === "SUBMISSION_RESULT") {
+        setSubmissionResult(msg.payload);
+        setLoading(false);
+      }
+    };
+
+    wsRef.current.onerror = () => {
+      setLoading(false); // FIX
+    };
+
+    return () => wsRef.current?.close();
+  }, [user]);
+
+  /* =======================
+     RUN CODE
+  ======================= */
   const runCode = async () => {
     try {
       setLoading(true);
       setOutput("Running...");
-      const res = await runCodeAPI({ code, language, input });
+
+      const res = await runCodeAPI({
+        userId: user?.userId,
+        problemId,
+        code,
+        language,
+        input, // FIX: missing input
+        token
+      });
+
       setOutput(
         `Output:\n${res.output}\n\nRuntime: ${res.runtime}\nMemory: ${res.memory}`,
       );
+    } catch (err) {
+      setOutput("Error while running code"); // FIX
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const submitCode = async () => {
-    try {
-      setLoading(true);
-      const res = await submitCodeAPI({ code, language });
-      setVerdict(res);
-    } finally {
-      setLoading(false);
+      setLoading(false); // FIX
     }
   };
 
   /* =======================
-     RENDER
-  ======================== */
+     SUBMIT CODE
+  ======================= */
+  const submitCode = async () => {
+    try {
+      setLoading(true);
+
+      await submitCodeAPI({
+        userId: user?.userId,
+        problemId,
+        code,
+        language,
+        token
+      });
+      // verdict arrives via WebSocket
+    } catch (err) {
+      setLoading(false); // FIX
+    }
+  };
+
+  if (!problem) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-400">
+        Loading problem...
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen">
-      {/* Top Navbar */}
+    <div className="h-screen flex flex-col overflow-hidden">
       <ProblemNavbar layout={layout} setLayout={setLayout} />
 
-      {/* Main Layout */}
       <div
-        className={`h-[calc(100vh-96px)] ${
+        className={`flex-1 ${
           layout === "split"
             ? "grid grid-cols-1 lg:grid-cols-2"
             : "grid grid-cols-1"
-        }`}
+        } overflow-hidden`}
       >
         {/* =======================
-            LEFT: PROBLEM PANEL
-        ======================== */}
+            LEFT PANEL
+        ======================= */}
         {layout !== "editor" && (
-          <section className="border-r border-[#1f2937] flex flex-col h-full">
-            {/* Scrollable Content */}
+          <section className="border-r border-[#1f2937] flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto p-6">
-              <h1 className="text-2xl font-semibold mb-1">{problem.title}</h1>
+              <h1 className="text-2xl font-semibold">{problem.title}</h1>
 
-              {/* Difficulty + Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex gap-2 my-3">
                 <span className="text-xs px-2 py-1 bg-green-900 text-green-300 rounded">
                   {problem.difficulty}
                 </span>
                 {problem.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-2 py-1 bg-[#1a1a1a] text-gray-300 rounded"
+                    className="text-xs px-2 py-1 bg-[#1a1a1a] rounded"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
 
-              {/* Description */}
-              <p className="text-gray-300 whitespace-pre-line">
-                {problem.description}
-              </p>
+              <p className="whitespace-pre-line">{problem.description}</p>
 
-              {/* Examples */}
-              <h3 className="font-semibold mt-6 mb-2">Examples</h3>
-              {problem.examples.map((ex, idx) => (
-                <pre key={idx} className="mb-3">
-                  Input: {ex.input}
-                  Output: {ex.output}
+              <h3 className="mt-6 font-semibold">Sample Testcases</h3>
+              {testCases.slice(0, 3).map((tc, i) => (
+                <pre key={i} className="bg-[#020617] p-3 rounded mt-2">
+                  Input:
+                  {"\n"}
+                  {tc.input}
+                  {"\n\n"}Output:
+                  {"\n"}
+                  {tc.output}
                 </pre>
               ))}
-
-              {/* Constraints */}
-              <h3 className="font-semibold mt-6 mb-2">Constraints</h3>
-              <ul className="list-disc pl-6 text-gray-300">
-                {problem.constraints.map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
             </div>
 
-            {/* Sticky Footer */}
-            <ProblemFooter stats={problemStats} />
+            {problemStats && (
+              <ProblemFooter
+                stats={{
+                  totalSubmissions: problemStats.totalSubmissions,
+                  acceptedSubmissions: problemStats.submissionAccepted,
+                  usersSolvingNow: problemStats.usersSolvingNow ?? 0,
+                }}
+              />
+            )}
           </section>
         )}
 
         {/* =======================
-            RIGHT: EDITOR PANEL
-        ======================== */}
+            RIGHT PANEL
+        ======================= */}
         {layout !== "problem" && (
-          <section className="flex flex-col h-full">
-            {/* Toolbar */}
-            <div className="flex justify-between items-center px-4 py-2 bg-[#111] border-b border-[#1f2937]">
+          <section className="flex flex-col overflow-hidden">
+            <div className="flex justify-between px-4 py-2 border-b border-[#1f2937]">
               <div className="flex gap-2">
                 {["cpp", "java", "python"].map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setLanguage(lang)}
-                    className={`px-3 py-1 text-sm rounded ${
+                    className={`px-3 py-1 rounded ${
                       language === lang
                         ? "bg-yellow-400 text-black"
-                        : "bg-[#1a1a1a] text-gray-300 hover:bg-[#2a2a2a]"
+                        : "bg-[#1a1a1a]"
                     }`}
                   >
                     {lang.toUpperCase()}
@@ -152,48 +238,39 @@ export default function ProblemPage() {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  onClick={runCode}
-                  disabled={loading}
-                  className="px-4 py-1.5 border border-[#2a2a2a] rounded hover:bg-[#1a1a1a]"
-                >
+                <button onClick={runCode} disabled={loading}>
                   Run
                 </button>
                 <button
                   onClick={submitCode}
                   disabled={loading}
-                  className="px-4 py-1.5 bg-green-600 text-white rounded hover:bg-green-500"
+                  className="bg-green-600 px-3 rounded"
                 >
                   Submit
                 </button>
               </div>
             </div>
 
-            {/* Monaco Editor */}
-            <Editor
-              height="55%"
-              theme="vs-dark"
-              language={language === "cpp" ? "cpp" : language}
-              value={code}
-              onChange={setCode}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-              }}
-            />
+            <div className="flex-1">
+              <Editor
+                height="100%"
+                theme="vs-dark"
+                language={language}
+                value={code}
+                onChange={setCode}
+                options={{ minimap: { enabled: false } }}
+              />
+            </div>
 
-            {/* Console */}
-            <div className="h-[25%] bg-[#0b0f19] border-t border-[#1f2937] p-3">
+            <div className="h-[30%] border-t border-[#1f2937] flex flex-col">
               <textarea
-                placeholder="Custom Input"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="w-full bg-[#020617] p-2 text-sm rounded mb-2 resize-none"
+                className="bg-[#020617] p-2"
+                placeholder="Custom input"
               />
-              <pre className="text-sm text-gray-300 whitespace-pre-wrap">
-                {output || "Output will appear here"}
+              <pre className="flex-1 overflow-y-auto p-2">
+                {output || "Output here"}
               </pre>
             </div>
           </section>
@@ -202,18 +279,32 @@ export default function ProblemPage() {
 
       {/* =======================
           VERDICT MODAL
-      ======================== */}
-      {verdict && (
+      ======================= */}
+      {submissionResult && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-[#111] p-6 rounded-xl border border-[#1f2937] w-[300px]">
+          <div className="bg-[#111] p-6 rounded w-[420px] max-h-[80vh] overflow-y-auto">
             <h2 className="text-xl font-semibold text-green-400">
-              {verdict.verdict}
+              {submissionResult.status}
             </h2>
-            <p className="mt-2 text-gray-300">Runtime: {verdict.runtime}</p>
-            <p className="text-gray-300">Memory: {verdict.memory}</p>
+
+            <p>Total Time: {submissionResult.totalTime} ms</p>
+
+            <h3 className="mt-4 font-semibold">Testcases</h3>
+
+            {submissionResult.results.map((tc, i) => (
+              <div key={i} className="bg-[#020617] p-2 rounded mt-2">
+                <div className="flex justify-between text-sm">
+                  <span>#{i + 1}</span>
+                  <span>{tc.status}</span>
+                </div>
+                <div className="text-xs">Time: {tc.time} ms</div>
+                {tc.stdout && <pre className="mt-1">{tc.stdout}</pre>}
+              </div>
+            ))}
+
             <button
-              onClick={() => setVerdict(null)}
-              className="mt-4 w-full px-4 py-1.5 bg-yellow-400 text-black rounded hover:bg-yellow-300"
+              onClick={() => setSubmissionResult(null)}
+              className="mt-4 w-full bg-yellow-400 text-black py-1 rounded"
             >
               Close
             </button>

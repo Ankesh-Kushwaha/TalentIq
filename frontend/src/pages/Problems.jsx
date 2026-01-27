@@ -8,70 +8,69 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import { getAllProblems } from "../apis/problems.api";
 
-/* =======================
-   CONSTANTS
-======================= */
+
 const TOPICS = [
   "Array",
   "String",
-  "Hash Table",
+  "Hashmap",
   "Two Pointers",
   "Binary Search",
   "Tree",
   "Graph",
-  "Dynamic Programming",
+  "DP",
 ];
-
-const COMPANIES = ["Google", "Amazon", "Microsoft", "Meta", "Apple", "Netflix"];
 
 const PAGE_SIZE = 12;
 
-/* =======================
-   MOCK PROBLEMS
-======================= */
-const ALL_PROBLEMS = Array.from({ length: 90 }).map((_, i) => ({
-  id: i + 1,
-  title: `Problem ${i + 1}`,
-  difficulty: i % 3 === 0 ? "Easy" : i % 3 === 1 ? "Medium" : "Hard",
-  topics: [TOPICS[i % TOPICS.length], TOPICS[(i + 2) % TOPICS.length]],
-  companies: [
-    COMPANIES[i % COMPANIES.length],
-    COMPANIES[(i + 1) % COMPANIES.length],
-  ],
-  acceptance: Math.floor(35 + Math.random() * 50),
-  likes: Math.floor(100 + Math.random() * 2000),
-  status: i % 4 === 0 ? "Solved" : i % 4 === 1 ? "Attempted" : "Todo",
-}));
-
 export default function ProblemsPage() {
   const navigate = useNavigate();
-
-  /* =======================
-     STATE
-  ======================== */
   const [difficulty, setDifficulty] = useState("All");
   const [topic, setTopic] = useState("All");
-  const [company, setCompany] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [problems, setProblems] = useState();
 
   const [starred, setStarred] = useState(() => {
     return JSON.parse(localStorage.getItem("starredProblems")) || [];
   });
 
-  /* =======================
-     PERSIST STARRED
-  ======================== */
+
   useEffect(() => {
     localStorage.setItem("starredProblems", JSON.stringify(starred));
+    const loadProblems = async ()=>{
+      const data = await getAllProblems();
+      setProblems(data);
+    }
+    loadProblems();
   }, [starred]);
 
-  /* =======================
-     FILTER + SEARCH
-  ======================== */
+ 
+ const allProblems = useMemo(() => {
+   if (!Array.isArray(problems)) return [];
+
+   return problems.map((p, index) => ({
+     id:index+1,
+     problemId: p._id,
+     slug: p.slug,
+     title: p.title,
+     difficulty:
+       p.difficulty === "EASY"
+         ? "Easy"
+         : p.difficulty === "MEDIUM"
+           ? "Medium"
+           : "Hard",
+     topics: p.tags.map((t) => t.charAt(0).toUpperCase() + t.slice(1)),
+     acceptance: "--",
+     companies: [],
+     status: "Todo",
+   }));
+ }, [problems]);
+
+
   const filteredProblems = useMemo(() => {
-    let data = [...ALL_PROBLEMS];
+    let data = [...allProblems];
 
     if (difficulty !== "All") {
       data = data.filter((p) => p.difficulty === difficulty);
@@ -81,10 +80,6 @@ export default function ProblemsPage() {
       data = data.filter((p) => p.topics.includes(topic));
     }
 
-    if (company !== "All") {
-      data = data.filter((p) => p.companies.includes(company));
-    }
-
     if (search.trim()) {
       data = data.filter((p) =>
         p.title.toLowerCase().includes(search.toLowerCase()),
@@ -92,36 +87,26 @@ export default function ProblemsPage() {
     }
 
     return data;
-  }, [difficulty, topic, company, search]);
+  }, [difficulty, topic, search, allProblems]);
 
-  /* =======================
-     PAGINATION
-  ======================== */
-  const totalPages = Math.ceil(filteredProblems.length / PAGE_SIZE);
+ 
+  const totalPages = Math.ceil(filteredProblems.length / PAGE_SIZE) || 1;
   const paginatedProblems = filteredProblems.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   );
 
-  /* =======================
-     STAR TOGGLE
-  ======================== */
   const toggleStar = (id) => {
     setStarred((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
-  /* =======================
-     RENDER
-  ======================== */
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-gray-200 px-6 py-10">
       <div className="max-w-7xl mx-auto">
-        {/* =======================
-            HEADER + SEARCH
-        ======================== */}
-        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-white">Problems</h1>
 
           <div className="relative">
@@ -141,10 +126,8 @@ export default function ProblemsPage() {
           </div>
         </div>
 
-        {/* =======================
-            FILTERS
-        ======================== */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        {/* FILTERS */}
+        <div className="flex gap-3 mb-6">
           <FilterSelect
             label="Difficulty"
             value={difficulty}
@@ -157,17 +140,9 @@ export default function ProblemsPage() {
             setValue={setTopic}
             options={["All", ...TOPICS]}
           />
-          <FilterSelect
-            label="Company"
-            value={company}
-            setValue={setCompany}
-            options={["All", ...COMPANIES]}
-          />
         </div>
 
-        {/* =======================
-            TABLE
-        ======================== */}
+        {/* TABLE */}
         <div className="bg-[#111] border border-[#1f2937] rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-[#0b0f19] text-gray-400">
@@ -175,8 +150,6 @@ export default function ProblemsPage() {
                 <th className="px-4 py-3">#</th>
                 <th className="text-left">Title</th>
                 <th>Status</th>
-                <th>Acceptance</th>
-                <th>Companies</th>
                 <th>Difficulty</th>
                 <th>⭐</th>
               </tr>
@@ -185,17 +158,17 @@ export default function ProblemsPage() {
             <tbody>
               {paginatedProblems.map((p) => (
                 <tr
-                  key={p.id}
+                  key={p.problemId}
                   className="border-t border-[#1f2937] hover:bg-[#1a1a1a]"
                 >
                   <td className="px-4 py-3 text-gray-400">{p.id}</td>
 
                   <td
                     className="cursor-pointer"
-                    onClick={() => navigate(`/problem/${p.id}`)}
+                    onClick={() => navigate(`/problem/${p.problemId}?${p.slug}`)}
                   >
                     <div className="text-white font-medium">{p.title}</div>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="flex gap-2 mt-1">
                       {p.topics.map((t) => (
                         <span
                           key={t}
@@ -207,7 +180,6 @@ export default function ProblemsPage() {
                     </div>
                   </td>
 
-                  {/* Status */}
                   <td className="text-center">
                     {p.status === "Solved" && (
                       <CheckCircle
@@ -218,12 +190,6 @@ export default function ProblemsPage() {
                     {p.status === "Attempted" && (
                       <Clock className="text-yellow-400 mx-auto" size={16} />
                     )}
-                  </td>
-
-                  <td className="text-center">{p.acceptance}%</td>
-
-                  <td className="text-center">
-                    {p.companies.slice(0, 2).join(", ")}
                   </td>
 
                   <td className="text-center">
@@ -240,7 +206,6 @@ export default function ProblemsPage() {
                     </span>
                   </td>
 
-                  {/* Star */}
                   <td className="text-center">
                     <Star
                       size={16}
@@ -258,9 +223,7 @@ export default function ProblemsPage() {
           </table>
         </div>
 
-        {/* =======================
-            PAGINATION
-        ======================== */}
+        {/* PAGINATION */}
         <div className="flex justify-between items-center mt-6 text-sm">
           <span className="text-gray-400">
             Page {page} of {totalPages}
@@ -283,10 +246,8 @@ export default function ProblemsPage() {
   );
 }
 
-/* =======================
-   REUSABLE COMPONENTS
-======================= */
-function FilterSelect({ label, value, setValue, options }) {
+
+function FilterSelect({ value, setValue, options }) {
   return (
     <select
       value={value}

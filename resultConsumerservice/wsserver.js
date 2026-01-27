@@ -1,11 +1,10 @@
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 import { addConnection, removeConnection } from "./connectionStore.js";
 
 export function startWebSocketServer(server) {
-  const wss = new WebSocket.Server({ server });
+  const wss = new WebSocketServer({ server });
 
   wss.on("connection", (ws, req) => {
-    // Expect: ws://host/ws?userId=123
     const params = new URLSearchParams(req.url.split("?")[1]);
     const userId = params.get("userId");
 

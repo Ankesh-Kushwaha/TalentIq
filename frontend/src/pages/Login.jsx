@@ -22,14 +22,14 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await loginUser(form); // 🔥 API call via hook
+    await loginUser(form); 
   };
 
   useEffect(() => {
     if (user) {
       if (user.role === "super_admin") navigate("/super-admin");
       else if (user.role === "admin") navigate("/admin");
-      else navigate("/dashboard");
+      else navigate("/");
     }
   }, [user, navigate]);
 

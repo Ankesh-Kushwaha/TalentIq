@@ -5,7 +5,6 @@ import useSignUp from "../hooks/useSignUp";
 
 export default function Signup() {
   const navigate = useNavigate();
-
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -23,9 +22,9 @@ export default function Signup() {
 
     try {
       await signupUser(form);
-      navigate("/"); // ✅ redirect after signup
+      navigate("/");
     } catch {
-      // error handled in hook
+      console.log("error while  sigup user");
     }
   };
 

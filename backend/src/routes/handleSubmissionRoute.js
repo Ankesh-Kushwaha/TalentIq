@@ -6,10 +6,11 @@ import {codeSubmissionRateLimiter,generalLimiter} from '../middlewares/apiRateLi
 
 //heavily rate limit this request
 router.post('/', authenticate, codeSubmissionRateLimiter, codeSubmission);
+router.post('/count-question-stats', countParticularQuestionSubmissionStats);
 router.use(authenticate, generalLimiter);
 router.get('/get-single-submission', getASingleSubmission);
 router.get('/get-all-submission-of-a-problem', getAllSubmissionOfAProblem);
 router.get('/get-all-user-submission',getAllUserSubmission);
-router.get('/count-question-stats', countParticularQuestionSubmissionStats);
+
 
 export default router;

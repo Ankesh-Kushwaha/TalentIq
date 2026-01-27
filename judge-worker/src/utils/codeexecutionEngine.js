@@ -75,9 +75,7 @@ export async function startQueueConsumer() {
   }
 }
 
-/* ------------------------------------------------------------------ */
 /* ---------------------- Submission Execution ------------------------ */
-/* ------------------------------------------------------------------ */
 
 async function executeSubmission(submission) {
   const language = await Language.findOne({ key: submission.language });

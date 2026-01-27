@@ -72,26 +72,40 @@ export const createTestCases = async (req, res) => {
 };
 
 
-export const findTestCases = async (req,res) => {
-  const { problemId } = req.body;
+export const findTestCases = async (req, res) => {
+  const { problemId } = req.params;
+
   try {
-    const testCases = await TestCase.find({ problemId: problemId });
-    if (testCases.length() == 0) {
-       return res.status(200).json("no test case exist problem.")
+    if (!problemId) {
+      return res.status(400).json({
+        success: false,
+        message: "problemId required",
+      });
     }
+
+    const testCases = await TestCase.find({ problemId });
+
+    if (testCases.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No test cases exist for this problem",
+        testCases: [],
+      });
+    }
+
     return res.status(200).json({
-      sucess: true,
-      message: "testcases fetched successfully",
-      testCases:testCases,
-    })
-  }
-  catch(err){
+      success: true,
+      message: "Testcases fetched successfully",
+      testCases,
+    });
+  } catch (err) {
     return res.status(500).json({
       success: false,
-      message:"something went wrong.try after sometime."
-    })
+      message: "Something went wrong. Try again later.",
+    });
   }
-}
+};
+
 
 export const deleteTestCase = async (req, res) => {
     

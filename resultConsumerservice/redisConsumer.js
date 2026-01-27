@@ -1,4 +1,4 @@
-import redis from "../config/redisConfig.js";
+import redis from './config/redisConfig.js';
 import { sendToUser } from "./connectionStore.js";
 
 export async function startResultConsumer() {
