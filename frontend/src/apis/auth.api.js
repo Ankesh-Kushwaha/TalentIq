@@ -1,5 +1,7 @@
 import axios from "axios";
-const baseUrl=import.meta.env.VITE_BASE_URL
+import { toast } from "react-toastify";
+const baseUrl = import.meta.env.VITE_BASE_URL
+
 
 const API = axios.create({
   baseURL:baseUrl,
@@ -18,15 +20,18 @@ API.interceptors.request.use((config) => {
 
 export const loginApi = async ({ email, password }) => {
   try {
+    toast.loading("user logging.......");
     const res = await API.post("/user/signin", {
       email,
       password,
     });
+
+    toast.dismiss();
    
-    alert("user sign in successfully");
-    console.log(res.data);
+    toast.success("user logged in successfull");
     return res.data; 
   } catch (error) {
+    toast.error("user login failed");
     throw (
       error.response?.data ||
       new Error("Something went wrong while logging in")
@@ -36,18 +41,41 @@ export const loginApi = async ({ email, password }) => {
 
 export const signUpAPi = async ({username,password,email})=>{
   try {
+    toast.loading("user registration in progress.....");
     const res = await API.post("/user/signup", {
       username,
       email,
       password
     })
-    alert("user sign up successfully");
+    toast.dismiss();
+    toast.success("user registration successfull");
     return res.data;
   }
   catch (error) {
+    toast.error("error while user registration");
     throw (
        error.response?.data ||
       new Error("Something went wrong while sign  up")
     )
   }
 }
+
+export const getAllUser = async (token) => {
+   try {
+  //   console.log(token)
+  //   if (!token) return;
+    const res = await axios.get(`${baseUrl}/user/get/all/profile`, {
+      headers: {
+        Authorization:`Bearer ${token}`,
+      }
+    });
+   
+    toast.success("all user fetched successfully");
+    return res.data;
+  }
+  catch (err) {
+    toast.error("error while getting all user profile....");
+    console.log('error while getting all user Profile.',err.message);
+  }
+}
+

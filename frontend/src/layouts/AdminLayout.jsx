@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { FileText, PlusSquare, Trophy } from "lucide-react";
+import { FileText, LayoutDashboard, PlusSquare, Trophy } from "lucide-react";
 
 export default function AdminLayout() {
   return (
@@ -9,6 +9,13 @@ export default function AdminLayout() {
         <h1 className="text-xl font-semibold text-white mb-6">Admin Panel</h1>
 
         <nav className="space-y-2">
+          <AdminLink
+            to="control/dashboard"
+            icon={<LayoutDashboard size={16} />}
+            label="Dashboard"
+            end="true"
+          />
+          
           <AdminLink
             to="problems"
             icon={<FileText size={16} />}
@@ -21,15 +28,16 @@ export default function AdminLayout() {
             label="Create Problem"
           />
           <AdminLink
-            to="control/contests"
-            icon={<Trophy size={16} />}
-            label="Contests Control"
-          />
-          <AdminLink
             to="problems/set/testcases"
             icon={<Trophy size={16} />}
             label="Set Test Cases"
           />
+          <AdminLink
+            to="control/contests"
+            icon={<Trophy size={16} />}
+            label="Contests Control"
+          />
+
           <AdminLink
             to="control/user/access"
             icon={<Trophy size={16} />}

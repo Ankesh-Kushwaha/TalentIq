@@ -32,6 +32,9 @@ import PlatformActivity from "./pages/super_admin/PlatformActivity";
 import PlatformSettings from "./pages/super_admin/PlatformSettings";
 import Unauthorised from "./pages/Unauthorised";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AdminDashboard from "./pages/admin/adminDashboard";
 
 const App = () => {
   const location = useLocation();
@@ -83,6 +86,7 @@ const App = () => {
             <Route path="problems/set/testcases" element={<SetTestCases />} />
             <Route path="control/contests" element={<SetContests />} />
             <Route path="control/user/access" element={<UserControl />} />
+            <Route path="control/dashboard" element={<AdminDashboard/>}/>
           </Route>
         </Route>
 
@@ -98,6 +102,18 @@ const App = () => {
 
         <Route path="/unauthorised" element={<Unauthorised />} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark" 
+      />
     </>
   );
 };

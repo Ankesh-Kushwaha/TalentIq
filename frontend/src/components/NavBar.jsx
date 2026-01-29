@@ -120,7 +120,6 @@ export default function Navbar() {
                   </div>
                 </motion.div>
 
-                {/* Dropdown */}
                 <AnimatePresence>
                   {profileOpen && (
                     <motion.div
@@ -129,9 +128,25 @@ export default function Navbar() {
                       exit={{ opacity: 0, y: -8 }}
                       className="absolute right-0 mt-3 w-44 bg-[#111] border border-[#2a2a2a] rounded-md shadow-lg overflow-hidden"
                     >
+                      {user.role==="super_admin" || user.role==='admin' ?  <button
+                        onClick={() => {
+                          {user.role == "super_admin"
+                            ? navigate(`/super-admin`)
+                            : navigate("/admin/control/dashboard");}
+                          setProfileOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
+                      >
+                        <User size={16} />
+                        dashboard
+                      </button>
+                        :
+                        <div></div>
+                      }
+
                       <button
                         onClick={() => {
-                          navigate(`/profile/${user.id}`);
+                          navigate(`/profile/${user.userId}`);
                           setProfileOpen(false);
                         }}
                         className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
