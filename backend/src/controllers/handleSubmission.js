@@ -74,10 +74,15 @@ export const codeSubmission = async (req, res) => {
 
 export const getASingleSubmission = async (req, res) => {
   try {
-    const {submissionId} = req.body;
+    const {submissionId} = req.params;
     const submissionIdObjectType =  new mongoose.Types.ObjectId(submissionId);
     if (!submissionIdObjectType) return res.status(404).json("submissionId is required");
-    const submission = await Submission.findById(submissionIdObjectType);
+    const submission = await Submission.findById(submissionIdObjectType).populate(
+      {
+        path: "problemId",
+        select:"slug title"
+      }
+    );
     if (!submission) return res.status(400).json("no submission");
     return res.status(200).json({
       success: true,
@@ -105,14 +110,41 @@ export const getAllUserSubmission = async (req, res) => {
         message: "Unauthorized",
       });
     }
+   
+    //get pagination info from the url
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * 10;
 
-    const submissionCount = await Submission.countDocuments({
-      userId: userId,
-    });
+    //query the database
+  const submissions = await Submission.find(
+      { userId },
+      {
+        sourceCode: 0,          // ❌ exclude heavy fields
+        testResults: 0,
+      }
+    )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "problemId",
+        select: "slug title", // only needed fields
+      })
+      .lean();
+
+
+     const totalSubmissions = await Submission.countDocuments({ userId });
 
     return res.status(200).json({
       success: true,
-      totalSubmissions: submissionCount,
+      data: submissions,
+      pagination: {
+        total: totalSubmissions,
+        page,
+        limit,
+        totalPages: Math.ceil(totalSubmissions / limit),
+      },
     });
 
   } catch (err) {

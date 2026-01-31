@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Menu, X, LogOut, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useDebounce } from "../hooks/usedebounce";
+import { globalSearch } from "../apis/problems.api";
 
 const navItems = [
   { label: "Problems", path: "/problems" },
@@ -19,16 +21,15 @@ export default function Navbar() {
 
   const isAuthenticated = Boolean(user);
 
-  // 🔍 search focus
-  const searchRef = useRef(null);
-
-  // 📱 mobile menu
+  const [search, setSearch] = useState("");
+  const [searchResult, setSearchResult] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // 👤 profile dropdown
   const [profileOpen, setProfileOpen] = useState(false);
 
-  /* ⌨️ "/" keyboard shortcut */
+  const searchRef = useRef(null);
+  const debounceSearch = useDebounce(search, 500);
+
+  /* ---------------- / KEY SHORTCUT ---------------- */
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
@@ -36,9 +37,29 @@ export default function Navbar() {
         searchRef.current?.focus();
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  /* ---------------- SEARCH API ---------------- */
+  useEffect(() => {
+    if (!debounceSearch.trim()) {
+      setSearchResult([]);
+      return;
+    }
+
+    const fetchSearch = async () => {
+      try {
+        const res = await globalSearch(debounceSearch);
+        setSearchResult(res.data || []);
+      } catch (err) {
+        console.error("Search error:", err);
+      }
+    };
+
+    fetchSearch();
+  }, [debounceSearch]);
 
   const handleLogout = () => {
     logout();
@@ -46,6 +67,7 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  /* ---------------- UI ---------------- */
   return (
     <motion.header
       initial={{ y: -40, opacity: 0 }}
@@ -85,7 +107,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.div
                       layoutId="nav-underline"
-                      className="absolute -bottom-2 left-0 right-0 h-[2px] bg-yellow-400"
+                      className="absolute -bottom-2 left-0 right-0 h-0.5 bg-yellow-400"
                     />
                   )}
                 </motion.button>
@@ -96,29 +118,47 @@ export default function Navbar() {
           {/* Right Section */}
           <div className="flex items-center gap-4 relative">
             {/* Search */}
-            <div className="hidden lg:flex items-center gap-2 bg-[#111] border border-[#2a2a2a] px-3 py-1.5 rounded-md">
+            <div className="hidden lg:flex items-center gap-2 bg-[#111] border border-[#2a2a2a] px-3 py-1.5 rounded-md relative">
               <Search size={16} className="text-gray-400" />
               <input
                 ref={searchRef}
                 type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search problems (/)"
                 className="bg-transparent text-sm text-gray-200 placeholder-gray-500 focus:outline-none w-44"
               />
+
+              {/* Search Results */}
+              {searchResult.length > 0 && (
+                <div className="absolute top-10 left-0 w-full bg-[#111] border border-[#2a2a2a] rounded-md max-h-64 overflow-y-auto z-50">
+                  {searchResult.map((p) => (
+                    <div
+                      key={p._id}
+                      onClick={() => {
+                        navigate(`/problem/${p._id}?${p.slug}`);
+                        setSearch("");
+                        setSearchResult([]);
+                      }}
+                      className="px-3 py-2 hover:bg-[#1a1a1a] cursor-pointer"
+                    >
+                      <p className="text-sm text-white">{p.title}</p>
+                      <p className="text-xs text-gray-400">{p.slug}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* AUTH SECTION */}
+            {/* Auth */}
             {isAuthenticated ? (
               <div className="relative">
-                {/* Avatar */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
+                <div
                   onClick={() => setProfileOpen((p) => !p)}
-                  className="cursor-pointer flex items-center gap-2"
+                  className="cursor-pointer h-8 w-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-semibold"
                 >
-                  <div className="h-8 w-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-semibold">
-                    {user.name?.[0]?.toUpperCase() || "U"}
-                  </div>
-                </motion.div>
+                  {user.name?.[0]?.toUpperCase() || "U"}
+                </div>
 
                 <AnimatePresence>
                   {profileOpen && (
@@ -126,40 +166,39 @@ export default function Navbar() {
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      className="absolute right-0 mt-3 w-44 bg-[#111] border border-[#2a2a2a] rounded-md shadow-lg overflow-hidden"
+                      className="absolute right-0 mt-3 w-44 bg-[#111] border border-[#2a2a2a] rounded-md overflow-hidden"
                     >
-                      {user.role==="super_admin" || user.role==='admin' ?  <button
-                        onClick={() => {
-                          {user.role == "super_admin"
-                            ? navigate(`/super-admin`)
-                            : navigate("/admin/control/dashboard");}
-                          setProfileOpen(false);
-                        }}
-                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
-                      >
-                        <User size={16} />
-                        dashboard
-                      </button>
-                        :
-                        <div></div>
-                      }
+                      {(user.role === "admin" ||
+                        user.role === "super_admin") && (
+                        <button
+                          onClick={() => {
+                            navigate(
+                              user.role === "super_admin"
+                                ? "/super-admin"
+                                : "/admin/control/dashboard",
+                            );
+                            setProfileOpen(false);
+                          }}
+                          className="w-full px-4 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a]"
+                        >
+                          Dashboard
+                        </button>
+                      )}
 
                       <button
                         onClick={() => {
                           navigate(`/profile/${user.userId}`);
                           setProfileOpen(false);
                         }}
-                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-gray-300 hover:bg-[#1a1a1a]"
+                        className="w-full px-4 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a]"
                       >
-                        <User size={16} />
                         Profile
                       </button>
 
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-2 text-sm flex items-center gap-2 text-red-400 hover:bg-[#1a1a1a]"
+                        className="w-full px-4 py-2 text-sm text-red-400 hover:bg-[#1a1a1a]"
                       >
-                        <LogOut size={16} />
                         Logout
                       </button>
                     </motion.div>
@@ -168,27 +207,25 @@ export default function Navbar() {
               </div>
             ) : (
               <>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
+                <button
                   onClick={() => navigate("/login")}
-                  className="text-sm text-gray-300 hover:text-white hidden sm:block"
+                  className="hidden sm:block text-sm text-gray-300 hover:text-white"
                 >
                   Login
-                </motion.button>
+                </button>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
+                <button
                   onClick={() => navigate("/signup")}
-                  className="text-sm bg-yellow-400 text-black px-4 py-1.5 rounded-md font-medium hover:bg-yellow-300 hidden sm:block"
+                  className="hidden sm:block text-sm bg-yellow-400 text-black px-4 py-1.5 rounded-md"
                 >
                   Sign Up
-                </motion.button>
+                </button>
               </>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle */}
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((m) => !m)}
               className="md:hidden text-gray-300"
             >
               {menuOpen ? <X /> : <Menu />}
@@ -196,6 +233,33 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="md:hidden bg-[#1a1a1a] border-t border-[#2a2a2a]"
+          >
+            <div className="flex flex-col px-6 py-4 space-y-4">
+              {navItems.map(({ label, path }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    navigate(path);
+                    setMenuOpen(false);
+                  }}
+                  className="text-left text-gray-300 hover:text-white"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

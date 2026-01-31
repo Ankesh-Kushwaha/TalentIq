@@ -35,6 +35,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminDashboard from "./pages/admin/adminDashboard";
+import AsingleSubmissionPage from "./pages/AsingleSubmissionPage";
 
 const App = () => {
   const location = useLocation();
@@ -62,6 +63,7 @@ const App = () => {
         <Route path="/profile/:userId" element={<UserProfile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/submission/:submissionId" element={<AsingleSubmissionPage/>}/>
 
         {/*super_admin control*/}
         <Route element={<ProtectedRoute roles={["super_admin"]} />}>
@@ -100,8 +102,11 @@ const App = () => {
           <Route path="discuss" element={<ContestDiscussion />} />
         </Route>
 
+        
+
         <Route path="/unauthorised" element={<Unauthorised />} />
       </Routes>
+
       <ToastContainer
         position="top-right"
         autoClose={3000}

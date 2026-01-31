@@ -79,3 +79,19 @@ export const getAllUser = async (token) => {
   }
 }
 
+export const getUserProfile = async (token) => {
+  try {
+    const res = await axios.get(`${baseUrl}/user/get/profile`, {
+      headers: {
+         Authorization:`Bearer ${token}`
+       }
+    }) 
+    
+    toast.success("user profile fetched successfully");
+    return res.data;
+  }
+  catch (err) {
+    toast.error("error while getting user profile");
+    console.error("error while getting user profile", err.message);
+  }
+}

@@ -5,7 +5,7 @@ export const createTestCases = async (req, res) => {
   try {
     const testCases = req.body;
     const role = req.user.role;
-    if (role != "admin" || role != "super_admin") return res.status(403).json("unauthorised access");
+    if (role !=="admin" && role !=="super_admin") return res.status(403).json("unauthorised access");
     
     // 1. Validate request body
     if (!Array.isArray(testCases) || testCases.length === 0) {

@@ -12,7 +12,6 @@ export const createProblem = async (req, res) => {
 
     //check user access here
     const user = await User.findOne({ _id: userId });
-    console.log(user);
 
     if (user.role !=='super_admin' && user.role!== 'admin') {
       return res.status(403).json({
@@ -196,5 +195,43 @@ export const updateAProblem = async (req, res) => {
   } catch (err) {
     logger.error(err);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const gobalSearchTheProblem = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || !q.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required",
+      });
+    }
+
+    const searchRegex = new RegExp(q.trim(), "i");
+
+    const problems = await Problems.find({
+      $or: [
+        { title: searchRegex },
+        { slug: searchRegex },
+        { tags: searchRegex },
+        { difficulty: searchRegex },
+      ],
+    })
+      .select("_id title slug difficulty")
+      .limit(10)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: problems.length,
+      data: problems,
+    });
+  } catch (error) {
+    console.error("Global problem search error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

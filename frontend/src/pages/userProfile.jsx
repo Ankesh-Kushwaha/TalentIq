@@ -1,209 +1,180 @@
-import { motion } from "framer-motion";
-import { Trophy, Code, BarChart, Flame, Clock, Terminal } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { Trophy, Code, BarChart, Flame } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getUserProfile } from "../apis/auth.api";
+import { getAllsubmissionOfUser } from "../apis/problems.api";
+import { useNavigate } from "react-router-dom";
 
-/* =======================
-   MOCK USER DATA
-======================= */
-const user = {
-  name: "Ankesh Kushwaha",
-  username: "ankesh_k",
-  rating: 2148,
-  rank: "Expert",
-  globalRank: 1284,
-  joined: "Jan 2024",
-  acceptanceRate: 54.2,
-  contests: 27,
-  fastestSolve: "2m 14s",
-  primaryLanguage: "C++",
-};
-
-const problemStats = {
-  total: 612,
-  easy: 310,
-  medium: 241,
-  hard: 61,
-};
-
-const ratingHistory = [
-  { month: "Jan", rating: 1450 },
-  { month: "Feb", rating: 1200 },
-  { month: "Mar", rating: 1380 },
-  { month: "Apr", rating: 1450 },
-  { month: "May", rating: 2080 },
-  { month: "Jun", rating: 2148 },
-];
-
-const recentSubmissions = [
-  {
-    id: 1,
-    problem: "Two Sum",
-    status: "Accepted",
-    lang: "C++",
-    time: "5 mins ago",
-  },
-  {
-    id: 2,
-    problem: "Longest Substring",
-    status: "Wrong Answer",
-    lang: "Python",
-    time: "22 mins ago",
-  },
-  {
-    id: 3,
-    problem: "Merge K Sorted Lists",
-    status: "Accepted",
-    lang: "Java",
-    time: "1 hour ago",
-  },
-];
-
-const badges = [
-  "🔥 100-Day Streak",
-  "🏆 Monthly Winner",
-  "⚡ Fast Solver",
-  "💡 Editorial Contributor",
+const contestRatings = [
+  { round: "R1", rating: 1000 },
+  { round: "R2", rating: 1100 },
+  { round: "R3", rating: 1200 },
 ];
 
 export default function UserProfile() {
+  const [userData, setUserData] = useState(null);
+
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [page, setPage] = useState(1); // ✅ init
+  const [limit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [submissions, setSubmissions] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const auth = JSON.parse(localStorage.getItem("auth"));
+    const token = auth?.token;
+    if (!token) return;
+
+    const fetchProfile = async () => {
+      try {
+        const data = await getUserProfile(token);
+        setUserData(data);
+      } catch (err) {
+        console.error("Profile fetch failed", err);
+      }
+    };
+
+    const fetchUserSubmission = async () => {
+      try {
+        setLoadingSubs(true);
+        const res = await getAllsubmissionOfUser({ token, page, limit });
+
+        if (res.success) {
+          setSubmissions(res.data); // ✅ correct
+          setTotalPages(res.pagination.totalPages); // ✅ correct
+        }
+      } catch (err) {
+        console.error("Submission fetch failed", err);
+      } finally {
+        setLoadingSubs(false);
+      }
+    };
+
+    fetchProfile();
+    fetchUserSubmission();
+  }, [page]); // ✅ correct dependency
+
+  /* ===== Loading Guard ===== */
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center text-gray-400">
+        Loading profile...
+      </div>
+    );
+  }
+
+  const solvedEasy = userData.solvedEasy || 0;
+  const solvedMedium = userData.solvedMedium || 0;
+  const solvedHard = userData.solvedHard || 0;
+  const solvedCount = solvedEasy + solvedMedium + solvedHard;
+
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-gray-200 px-6 py-10">
-      {/* =======================
-          HEADER
-      ======================== */}
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8 mb-12">
+      {/* HEADER */}
+      <div className="max-w-6xl mx-auto flex items-center gap-6 mb-10">
         <div className="h-24 w-24 rounded-full bg-yellow-400 text-black flex items-center justify-center text-3xl font-bold">
-          A
+          {userData.username?.[0]?.toUpperCase()}
         </div>
 
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-white">{user.name}</h1>
-          <p className="text-gray-400">@{user.username}</p>
-
-          <div className="flex flex-wrap gap-4 mt-3 text-sm">
-            <span className="text-yellow-400">Rating: {user.rating}</span>
-            <span className="text-gray-400">Rank: {user.rank}</span>
-            <span className="text-gray-400">
-              Global Rank: #{user.globalRank}
-            </span>
-            <span className="text-gray-400">Joined {user.joined}</span>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-white">
+            @{userData.username}
+          </h1>
+          <p className="text-gray-400">{userData.email}</p>
         </div>
       </div>
 
-      {/* =======================
-          STATS CARDS
-      ======================== */}
+      {/* STATS */}
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-        <StatCard icon={<Code />} label="Solved" value={problemStats.total} />
-        <StatCard
-          icon={<BarChart />}
-          label="Acceptance"
-          value={`${user.acceptanceRate}%`}
-        />
-        <StatCard icon={<Flame />} label="Contests" value={user.contests} />
-        <StatCard icon={<Trophy />} label="Rank" value={user.rank} />
+        <StatCard icon={<Code />} label="Solved" value={solvedCount} />
+        <StatCard icon={<Flame />} label="Easy" value={solvedEasy} />
+        <StatCard icon={<BarChart />} label="Medium" value={solvedMedium} />
+        <StatCard icon={<Trophy />} label="Hard" value={solvedHard} />
       </div>
 
-      {/* =======================
-          MAIN GRID
-      ======================== */}
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 mb-12">
-        {/* Problem Distribution */}
-        <Card title="Problem Solving">
-          <Progress
-            label="Easy"
-            value={problemStats.easy}
-            total={problemStats.total}
-            color="bg-green-500"
-          />
-          <Progress
-            label="Medium"
-            value={problemStats.medium}
-            total={problemStats.total}
-            color="bg-yellow-500"
-          />
-          <Progress
-            label="Hard"
-            value={problemStats.hard}
-            total={problemStats.total}
-            color="bg-red-500"
-          />
-        </Card>
+      {/* SUBMISSIONS */}
+      <Card title="User Submissions" className="max-w-6xl mx-auto">
+        {loadingSubs ? (
+          <p className="text-gray-400">Loading submissions...</p>
+        ) : submissions.length === 0 ? (
+          <p className="text-gray-400">No submissions found.</p>
+        ) : (
+          <>
+            <table className="w-full text-sm">
+              <thead className="border-b border-[#1f2937] text-gray-400">
+                <tr>
+                  <th className="py-2 text-left">Problem</th>
+                  <th>Status</th>
+                  <th>Lang</th>
+                  <th>Total Time (ms)</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
 
-        {/* Rating Line Graph */}
-        <Card title="Rating Progress">
-          <RatingLineChart data={ratingHistory} />
-        </Card>
-      </div>
+              <tbody>
+                {submissions.map((s) => (
+                  <tr key={s._id} className="border-b border-[#1f2937]">
+                    <td className="py-2 text-white cursor-pointer hover:underline"
+                    onClick={()=>{navigate(`/submission/${s._id}`);}}
+                    >{s.problemId.slug || "—"}</td>
 
-      {/* =======================
-          EXTRA STATS
-      ======================== */}
-      <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6 mb-12">
-        <MiniStat
-          icon={<Clock />}
-          label="Fastest Solve"
-          value={user.fastestSolve}
-        />
-        <MiniStat
-          icon={<Terminal />}
-          label="Primary Language"
-          value={user.primaryLanguage}
-        />
-        <MiniStat icon={<Flame />} label="Current Streak" value="37 days" />
-      </div>
+                    <td
+                      className={
+                        s.status === "AC" ? "text-green-400" : "text-red-400"
+                      }
+                    >
+                      {s.status}
+                    </td>
 
-      {/* =======================
-          RECENT SUBMISSIONS
-      ======================== */}
-      <Card title="Recent Submissions" className="max-w-6xl mx-auto mb-12">
-        <table className="w-full text-sm">
-          <thead className="border-b border-[#1f2937] text-gray-400">
-            <tr>
-              <th className="py-2 text-left">Problem</th>
-              <th>Status</th>
-              <th>Lang</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentSubmissions.map((s) => (
-              <tr key={s.id} className="border-b border-[#1f2937]">
-                <td className="py-2 text-white">{s.problem}</td>
-                <td
-                  className={
-                    s.status === "Accepted" ? "text-green-400" : "text-red-400"
-                  }
-                >
-                  {s.status}
-                </td>
-                <td>{s.lang}</td>
-                <td className="text-gray-400">{s.time}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+                    <td>{s.language}</td>
+                    <td>{s.totalTime ?? "-"}</td>
+                    <td>{new Date(s.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-      {/* =======================
-          BADGES
-      ======================== */}
-      <Card title="Achievements" className="max-w-6xl mx-auto">
-        <div className="flex flex-wrap gap-3">
-          {badges.map((b) => (
-            <span key={b} className="px-3 py-1 bg-[#1a1a1a] rounded text-sm">
-              {b}
-            </span>
-          ))}
-        </div>
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-4 text-sm">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="px-3 py-1 border border-[#1f2937] rounded disabled:opacity-40"
+              >
+                Prev
+              </button>
+
+              <span className="text-gray-400">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-3 py-1 border border-[#1f2937] rounded disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   );
 }
 
-/* =======================
-   COMPONENTS
-======================= */
+/* ===== helpers unchanged ===== */
 function Card({ title, children, className = "" }) {
   return (
     <div
@@ -224,74 +195,5 @@ function StatCard({ icon, label, value }) {
         <div className="text-sm text-gray-400">{label}</div>
       </div>
     </div>
-  );
-}
-
-function MiniStat({ icon, label, value }) {
-  return (
-    <div className="bg-[#111] border border-[#1f2937] rounded-xl p-5 flex items-center gap-4">
-      <div className="text-yellow-400">{icon}</div>
-      <div>
-        <div className="text-white font-semibold">{value}</div>
-        <div className="text-xs text-gray-400">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-function Progress({ label, value, total, color }) {
-  const percent = Math.round((value / total) * 100);
-
-  return (
-    <div className="mb-4">
-      <div className="flex justify-between text-sm mb-1">
-        <span>{label}</span>
-        <span className="text-gray-400">
-          {value} ({percent}%)
-        </span>
-      </div>
-      <div className="h-2 bg-[#1f2937] rounded">
-        <div
-          className={`h-2 ${color} rounded`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* =======================
-   RATING LINE GRAPH
-======================= */
-function RatingLineChart({ data }) {
-  const width = 300;
-  const height = 120;
-  const padding = 20;
-
-  const max = Math.max(...data.map((d) => d.rating));
-  const min = Math.min(...data.map((d) => d.rating));
-
-  const points = data.map((d, i) => {
-    const x = padding + (i / (data.length - 1)) * (width - padding * 2);
-    const y =
-      height -
-      padding -
-      ((d.rating - min) / (max - min)) * (height - padding * 2);
-    return `${x},${y}`;
-  });
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-      <polyline
-        points={points.join(" ")}
-        fill="none"
-        stroke="#facc15"
-        strokeWidth="2"
-      />
-      {points.map((p, i) => {
-        const [x, y] = p.split(",");
-        return <circle key={i} cx={x} cy={y} r="3" fill="#facc15" />;
-      })}
-    </svg>
   );
 }

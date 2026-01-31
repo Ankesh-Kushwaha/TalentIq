@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { setAProblem } from "../../apis/problems.api";
 
-/* ---------------- MOCK FETCH ---------------- */
 
 const mockFetchProblemById = async (id) => {
   await new Promise((r) => setTimeout(r, 500));
@@ -50,8 +50,6 @@ export default function CreateEditProblem() {
   const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
 
-  /* ---------------- LOAD (EDIT MODE) ---------------- */
-
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -77,8 +75,6 @@ export default function CreateEditProblem() {
     load();
   }, [id, isEditMode]);
 
-  /* ---------------- SUBMIT ---------------- */
-
   const submit = async (e) => {
     e.preventDefault();
 
@@ -86,6 +82,11 @@ export default function CreateEditProblem() {
       ...form,
       tags: form.tags.split(",").map((t) => t.trim()),
     };
+   
+    const auth = JSON.parse(localStorage.getItem('auth'));
+    const token = auth?.token;
+    console.log(token)
+    await setAProblem({payload, token});
 
     try {
       if (isEditMode) {
@@ -100,8 +101,6 @@ export default function CreateEditProblem() {
     }
   };
 
-  /* ---------------- STATES ---------------- */
-
   if (loading) return <div className="text-gray-400">Loading problem…</div>;
 
   if (error)
@@ -114,7 +113,6 @@ export default function CreateEditProblem() {
       </div>
     );
 
-  /* ---------------- UI ---------------- */
 
   return (
     <div className="max-w-4xl">
@@ -236,7 +234,6 @@ export default function CreateEditProblem() {
   );
 }
 
-/* ---------------- FIELD COMPONENTS ---------------- */
 
 function Input({ label, value, onChange }) {
   return (
