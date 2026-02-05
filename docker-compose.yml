@@ -1,4 +1,4 @@
-version: "3.9"
+version: "1.0"
 
 networks:
   talentIq-network:
@@ -50,19 +50,6 @@ services:
       - redis
     networks:
       - talentIq-network
-
-  judge-worker:
-    image: talentIq/judge-worker:latest
-    container_name: talentIq-judge-worker
-    env_file:
-      - ./judge-worker/.env
-    depends_on:
-      - backend
-      - redis
-    networks:
-      - talentIq-network
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock 
 
   result-consumer-service:
     image: talentIq/result-consumer-service:latest
